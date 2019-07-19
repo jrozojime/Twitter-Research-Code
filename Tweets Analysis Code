@@ -1,0 +1,219 @@
+import re
+import os
+import sys
+import json
+import csv
+import math
+import spacy
+import scipy as sp 
+import random
+import gensim
+import sklearn
+import pprint
+import pyLDAvis
+import datetime
+import itertools
+import unicodedata
+import credentials
+import nltk as nl
+import pandas as pd
+import numpy as np
+import collections
+import networkx as nx
+import seaborn as sns
+import matplotlib.pyplot as plt
+plt.rcParams['figure.figsize'] = [10,5]
+import pyLDAvis.gensim as gensimvis
+from nltk import bigrams
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.tokenize import MWETokenizer
+from string import punctuation
+from spacy.matcher import PhraseMatcher
+from wordcloud import WordCloud
+from stop_words import get_stop_words
+from collections import Counter
+from textblob import TextBlob
+from gensim import corpora
+from gensim.corpora import Dictionary, MmCorpus
+from gensim.models import CoherenceModel
+from gensim.models import KeyedVectors
+from gensim.test.utils import datapath
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import PCA
+
+import warnings
+warnings.filterwarnings("ignore")
+
+np.random.seed(0)
+random.seed(0)
+sns.set(font_scale=1.5)
+sns.set_style("whitegrid")
+
+#Spacy Natural Language Processing data set
+nlp = spacy.load("es_core_news_sm")
+matcher = PhraseMatcher(nlp.vocab)
+
+#NLTK Spanish Stopwords
+nl.download('stopwords')
+stopwords = nl.corpus.stopwords.words('spanish')
+
+#Add Stopwords to the downloaded list 
+stopwords.append('###')
+
+#Join two tokens in one token e.g 'donald','trumps' becomes 'donald trump'
+tokenizer = MWETokenizer(separator=' ')
+tokenizer.add_mwe(('XXX','XXX'))
+
+#Open the dataset
+data = pd.read_csv("Full Full Data .csv", sep=';') 
+
+#Shows the first 5 elements of the data set
+data.head()
+
+#Elimintates any duplicated tweet
+data["full_text"] = data["full_text"].drop_duplicates(keep=False)
+
+#Eliminates any N/A value 
+data1 = data["full_text"].dropna(how='all')
+
+#Tokenize the Tweets making a list from every tweet
+tokens = data1.apply(word_tokenize)
+
+#Join the tokenized names in one token
+datata = tokens.apply(tokenizer.tokenize)
+
+#Create a list of lists 
+terms=[]
+for row in datata:
+    terms.append(row)
+
+#Removes the stopwords
+tweets_nsw = [[word for word in tweet_words if not word in stopwords]for tweet_words in terms]
+
+#Count the most common words
+all_words_nsw = list(itertools.chain(*tweets_nsw))
+counts_nsw = collections.Counter(all_words_nsw)
+counts_nsw.most_common(50)
+
+#Plot the common words
+clean_tweets = pd.DataFrame(counts_nsw.most_common(25),columns=['Words', 'Count'])
+fig,ax=plt.subplots(figsize=(8,8))
+clean_tweets.sort_values(by='Count').plot.barh(x='Words',y='Count',ax=ax,color='blue')
+ax.set_title('Common Words Found in Tweets(Including All Words)')
+plt.savefig("CommonWords"+"png",bbox_inches="tight")
+plt.show()
+
+#Lemmatization with SpiCy
+lengths = np.cumsum([0] + list(map(len,tweets_nsw)))
+flat_words = [item for sublist in tweets_nsw for item in sublist]
+doc = spacy.tokens.Doc(nlp.vocab, words=flat_words)
+lemma_words = []
+for index in range(1, len(lengths)):
+    span = doc[lengths[index -1]:lengths[index]]
+    lemma_words.append([token.lemma_ for token in span])
+   
+#Convert list of lists into document Term Matrix
+dictionary = corpora.Dictionary(lemma_words)
+words_matrix=[dictionary.doc2bow(word) for word in lemma_words]
+
+#create LDA Model with gensim
+Lda= gensim.models.ldamodel.LdaModel
+ldamodel = Lda(words_matrix, num_topics = 8, id2word = dictionary, passes = 200)
+print(ldamodel.print_topics(num_topics = 8 ,num_words =10))
+doc_lda=ldamodel[words_matrix]
+
+#LDA Visualization
+ldamodel.save('polarization_lda3.model')
+MmCorpus.serialize('polarization_lda3.mm',words_matrix)
+dictionary.save('polarization3.dict')
+vis_data = gensimvis.prepare(ldamodel,words_matrix,dictionary)
+pyLDAvis.display(vis_data)
+
+# Compute Perplexity
+print('Perplexity: ', ldamodel.log_perplexity(words_matrix))
+
+#Coherence Score c_v
+coherence_model_lda = CoherenceModel(model=ldamodel, texts=lemma_words, dictionary=dictionary , coherence='c_v')
+coherence_lda = coherence_model_lda.get_coherence()
+print('Coherence Score: ',coherence_lda)
+
+#Coherence Score c_v
+limit=15
+start=2 
+step=6
+coherence_values = []
+model_list = []
+for num_topics in range(start, limit, step):
+    model=Lda(corpus=words_matrix, id2word=dictionary, num_topics=15)
+    model_list.append(model)
+    coherencemodel = CoherenceModel(model=model, texts=lemma_words, dictionary=dictionary, coherence='c_v')
+    coherence_values.append(coherencemodel.get_coherence())
+    
+# Plot coherence Score c_v graph
+limit=15; start=2; step=6;
+x = range(start, limit, step)
+plt.plot(x, coherence_values)
+plt.xlabel("Num Topics")
+plt.ylabel("Coherence score")
+plt.legend(("coherence_values"), loc='best')
+plt.savefig("Coherence Score vs Topic Number"+"png",bbox_inches="tight")
+plt.show()
+
+#Coherence Score UMass
+coherence_model_lda = CoherenceModel(model=ldamodel, texts=lemma_words, dictionary=dictionary , coherence='u_mass')
+coherence_lda = coherence_model_lda.get_coherence()
+print('Coherence Score: ',coherence_lda)
+
+#Coherence Score UMass
+limit=20
+start=2 
+step=6
+
+coherence_values = []
+model_list = []
+for num_topics in range(start, limit, step):
+    model=Lda(corpus=words_matrix, id2word=dictionary, num_topics=20)
+    model_list.append(model)
+    coherencemodel = CoherenceModel(model=model, texts=lemma_words, dictionary=dictionary, coherence='u_mass')
+    coherence_values.append(coherencemodel.get_coherence())
+   
+# Plot coherence Score UMass graph
+limit=20; start=2; step=6;
+x = range(start, limit, step)
+plt.plot(x, coherence_values)
+plt.xlabel("Num Topics")
+plt.ylabel("Coherence score")
+plt.legend(("coherence_values"), loc='best')
+plt.show()
+
+#Generate WordCloud 
+temp =''
+for sub_list in lemma_words:
+    for w in sub_list:
+        temp=temp + ' '+ w
+
+#Word Cloud all words
+wc = WordCloud(width = 1000, height = 500, max_font_size=150, max_words=100,background_color='white').generate(temp)
+plt.figure(figsize = (15,8))
+plt.imshow(wc, interpolation='bilinear')
+plt.axis("off")
+plt.savefig("CloudFull2"+"png",bbox_inches="tight")
+plt.show()
+plt.close
+
+#Create Network with NetworkX(With Collection Terms)
+b_biagram=[list(bigrams(t))for t in tweets_nsw]
+bigramb = list(itertools.chain(*b_biagram))
+bigram_counts1 = collections.Counter(bigramb) 
+bigram_counts1.most_common(40)
+
+bigram_df1 = pd.DataFrame(bigram_counts1.most_common(200),columns=['bigram','count'])
+d = bigram_df1.set_index('bigram').T.to_dict('records')
+G = nx.Graph()
+for k, v in d[0].items():
+    G.add_edge(k[0],k[1],weight=(v*10))
+    
+#Save the Graph 
+nx.write_gexf(G,"final.gexf")
