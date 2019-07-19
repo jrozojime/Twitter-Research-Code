@@ -1,0 +1,67 @@
+import json
+import csv
+import tweepy as tw
+import re
+import datetime
+import sys
+import pandas as pd
+import numpy as np
+import credentials
+import os
+import unicodedata
+
+# Function to remove: Tilds that are common in spanish language
+def remove_tilds(text):
+    return ''.join(c for c in unicodedata.normalize('NFD',text) if unicodedata.category(c) != 'Mn') 
+    
+#Function to remove: links, mentions to other users.
+def remove_sht(text):
+    return ' '.join(re.sub("^\s+|\n|\r|\s+|^@\w+\W|@\w+|([^0-9A-Za-z \t])|(\w+:\/\/\S+)"," ", text).split()) 
+    
+os.getcwd() # Informs where is going to be located the project and where are the scrapped files going to be saved
+
+#Store the Twitter keys in variables
+# Consume:
+CONSUMER_KEY    = 'XXXXXXXXXXXXXXX'
+CONSUMER_SECRET = 'XXXXXXXXXXXXXXX'
+# Access:
+ACCESS_TOKEN  = 'XXXXXXXXXXXXXXX'
+ACCESS_SECRET = 'XXXXXXXXXXXXXXX'
+
+#Communicates with Twitter and grants access to the API
+auth = tw.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
+
+api = tw.API(auth, wait_on_rate_limit=True)
+
+#insert the term that you want to find
+search_col= 'XXXXX'
+
+#Variable to store the data
+t_tweets=[]
+
+#Loop that finds all the tweets made in a X language in a X period of time 
+for tweet in tw.Cursor(api.search,q=search_col,lang='XX', since='XXXX-XX-XX',tweet_mode="extended").items(500):
+    t_tweets.append(tweet)
+
+#Create a DataFrame
+tweets_df = pd.DataFrame(vars(t_tweets[i]) for i in range(len(t_tweets)))
+
+#Select the columms
+tweet_atts = ['created_at','full_text','source_url',]
+
+#Modifies the DataFrame with the selected columns
+tweets_df = tweets_df[tweet_atts]
+
+#Apply the function by default .lower to lower all the text on the column called 'full_text'
+tweets_df['full_text']=tweets_df['full_text'].str.lower()
+
+#Apply the function remove_tids in the text on the column called 'full_text' 
+tweets_df['full_text']=tweets_df['full_text'].apply(remove_tilds)
+
+#Apply the function remove_sht in the text on the column called 'full_text' 
+tweets_df['full_text']=tweets_df['full_text'].apply(remove_sht)
+
+#Save the DataFrame as a csv file UTF-8 Enconding
+tweets_df.to_csv('XXXXXXXXXX#LocationXXXXXXXX', sep=',',encoding='utf-8')
+    
