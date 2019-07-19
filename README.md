@@ -1,6 +1,6 @@
 # Twitter Research Code
 
-This code was writte for my Masters Thesis Degree in Data Journalism while studying in the Higher School of Economics in Moscow
+This code was written for my Masters Thesis Degree in Data Journalism while studying in the Higher School of Economics in Moscow
 
 Here you can find: 
 
