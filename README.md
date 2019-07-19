@@ -8,7 +8,7 @@ How to scrap tweets from Twitter through the Twitter API.
 
 How to clean and create a dataframe with the scrapped data from Twitter
 
-How to tokenize, lemmatize and add stopwords in order to analyze the content of the tweets
+How to tokenize, lemmatize and remove stopwords in order to analyze the content of the tweets
 
 How to count the most common words in the collection of tweets
 
