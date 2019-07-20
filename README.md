@@ -10,9 +10,9 @@ How to clean and create a dataframe with the scrapped data from Twitter
 
 How to tokenize, lemmatize and remove stopwords in order to analyze the content of the tweets
 
-How to count the most common words in the collection of tweets
+How to count the common words in the collection of tweets
 
-How to create a WordCloud
+How to create a WordCloud based in the common words in the collection of tweets
 
 How to create a Bigram Network based file .gexf to be used in Gephi
 
