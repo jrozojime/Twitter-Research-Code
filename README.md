@@ -18,7 +18,6 @@ How to create a Bigram Network based file .gexf to be used in Gephi
 
 Run a LDA algorithim in order to know the most predominant topics in the collection of tweets
 
-Generate a LDA algorithim visualization in order to explore easily the results given by the algorithim
+Generate a LDA algorithim visualization in order to explore easily the results given by the LDA algorithim
 
-Run a series of tests like :UMass, c_v and perplexity in order to check that your LDA algorithim is performing fine
-
+Run a series of tests like :UMass, c_v and perplexity in order to check the accuracy of the LDA algorithim
