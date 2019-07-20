@@ -16,8 +16,8 @@ How to create a WordCloud based in the common words in the collection of tweets
 
 How to create a Bigram Network based file .gexf to be used in Gephi
 
-Run a LDA algorithim in order to know the most predominant topics in the collection of tweets
+Run a LDA algorithm in order to know the most predominant topics in the collection of tweets
 
-Generate a LDA algorithim visualization in order to explore easily the results given by the LDA algorithim
+Generate a LDA algorithm visualization in order to explore easily the results given by the LDA algorithm
 
-Run a series of tests like :UMass, c_v and perplexity in order to check the accuracy of the LDA algorithim
+Run a series of tests like :UMass, c_v and perplexity in order to check the accuracy of the LDA algorithm
